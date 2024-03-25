@@ -1,0 +1,36 @@
+import pandas as pd
+import re
+
+# Sample data (replace with your actual data)
+data = {'Device_Type': ['AXO145', 'TRU151', 'ZOD231', 'YRT326', 'LWR245'],
+        'Stats_Access_Link': [
+            '<url>https://xcd32112.smart_meter.com</url>',
+            '<url>http://tXh67.dia_meter.com</url>',
+            '<url>http://yT5495.smart_meter.com</url>',
+            '<url>https://ret323_TRu.crown.com</url>',
+            '<url>https://luwr3243.celsius.com</url>'
+        ]}
+
+df = pd.DataFrame(data)
+
+# Define the regular expression pattern
+pattern = r'<url>(https?://[a-zA-Z0-9_.]+\.smart_meter\.com)</url>'
+
+# Function to extract URL from link
+def extract_url(link):
+    match = re.search(pattern, link, re.IGNORECASE)
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+# Group data by device type
+grouped_data = df.groupby('Device_Type')
+
+# Extract URLs for each device type
+for device_type, group_data in grouped_data:
+    urls = group_data['Stats_Access_Link'].apply(extract_url)
+    # Print extracted URLs for each device type
+    print(f"Device Type: {device_type}")
+    for url in urls:
+        print(url)
