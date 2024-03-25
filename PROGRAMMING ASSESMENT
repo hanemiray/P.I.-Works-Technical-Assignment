@@ -1,0 +1,77 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score, roc_curve, auc
+from sklearn.impute import SimpleImputer  # For missing value imputation
+from seaborn import pairplot  # For alternative plotting (seaborn library)
+
+# Load data
+df = pd.read_csv("C:/Users/emirh/Downloads/dataset.csv")
+
+# Check for missing values
+print("Missing values summary:")
+print(df.isnull().sum())
+
+# Handle missing values (using SimpleImputer for mean imputation)
+imputer = SimpleImputer(strategy="mean")
+df = pd.DataFrame(imputer.fit_transform(df))
+
+# Function to plot histograms (handles layout and potential errors)
+def plot_histograms(df):
+  num_features = df.shape[1] - 1  # Subtract 1 to exclude the label column
+  layout = (2, 2) if num_features > 4 else (1, num_features)
+
+  try:
+    df.plot.hist(subplots=True, layout=layout, figsize=(10, 10))
+    plt.title("Distribution of Features After Imputation")
+    plt.show()
+  except ValueError:
+    print("Layout adjustment failed. Using pairplot for feature distribution.")
+    pairplot(df.iloc[:, :-1])  # Exclude the label column for pairplot
+    plt.show()
+
+# Plot histograms with error handling
+plot_histograms(df.copy())  # Avoid modifying the original DataFrame
+
+# Separate features and target variable
+X = df.iloc[:, :-1]  # All columns except the last (label)
+y = df.iloc[:, -1]
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Feature scaling (using StandardScaler)
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train the Logistic Regression model
+model = LogisticRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on testing set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+f1 = f1_score(y_test, y_pred)
+fpr, tpr, _ = roc_curve(y_test, y_pred)
+roc_auc = auc(fpr, tpr)
+
+# Print evaluation metrics
+print("F1-score:", f1)
+print("AUC-ROC:", roc_auc)
+
+# Plot ROC curve
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % roc_auc)
+plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve (Receiver Operating Characteristic)')
+plt.legend(loc="lower right")
+plt.show()
+
