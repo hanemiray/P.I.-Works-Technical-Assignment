@@ -1,0 +1,19 @@
+WITH imputed_data AS (
+  SELECT *,
+         DENSE_RANK() OVER (PARTITION BY country ORDER BY daily_vaccinations) AS rank,
+         COUNT(*) OVER (PARTITION BY country) AS total_rows
+  FROM your_table
+)
+UPDATE imputed_data
+SET daily_vaccinations = (
+  SELECT median(daily_vaccinations)
+  FROM imputed_data AS median_table
+  WHERE median_table.country = imputed_data.country
+  AND median_table.rank <= CEIL(imputed_data.total_rows / 2.0)
+  AND median_table.rank >= FLOOR(imputed_data.total_rows / 2.0 + 1)
+)
+WHERE imputed_data.daily_vaccinations IS NULL;
+
+UPDATE imputed_data
+SET daily_vaccinations = 0
+WHERE country = 'Kuwait' AND daily_vaccinations IS NULL;
