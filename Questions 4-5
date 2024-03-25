@@ -1,23 +1,17 @@
 import pandas as pd
 import numpy as np
 
-# Read the data from the CSV file (assuming the file is named 'daily_vaccinations_imputed.csv')
-df = pd.read_csv("C:/Users/emirh/PycharmProjects/DSAI512/HW5/daily_vaccinations_imputed.csv")
+# Read the data from the CSV file
+df = pd.read_csv("C:/Users/emirh/Downloads/country_vaccination_stats.csv")
 
-# Calculate median daily vaccinations for each country
-median_vaccinations = df.groupby('country')['daily_vaccinations'].median()
+# Find the minimum daily vaccinations by country
+min_daily_vaccinations_by_country = df.groupby("country")["daily_vaccinations"].transform("min")
 
-# Sort countries by median daily vaccinations in descending order
-sorted_median_vaccinations = median_vaccinations.sort_values(ascending=False)
+# Fill missing values in "daily_vaccinations" column with the minimum daily vaccinations by country
+df["daily_vaccinations"].fillna(min_daily_vaccinations_by_country, inplace=True)
 
-# Get the top 3 countries
-top_3_countries = sorted_median_vaccinations.head(3).index.tolist()
+# Fill remaining missing values (countries without any data) with 0
+df.loc[(df["country"] == "Kuwait") & (df["daily_vaccinations"].isna()), "daily_vaccinations"] = 0
 
-# Print the top 3 countries with highest median daily vaccinations
-print("Top 3 countries with highest median daily vaccinations:")
-for country in top_3_countries:
-  print(country)
+df.to_csv("daily_vaccinations_imputed.csv", index=False)
 
-
-total_vacc = df[pd.to_datetime(df['date']) == '2021-01-06']["daily_vaccinations"].sum()
-print(total_vacc)
